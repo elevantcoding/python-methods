@@ -4,25 +4,25 @@ by ElevantCoding
 
  Procedures in this module:
 ---------------------------------------------------------------------------------------------------------------------------------------------------
- getrandval, getrandchar, replacecharatindex, getaltervals, generateciph, numcipher, cipherstring, decipherstring, validate_xor_range
+ get_rand_val, get_rand_char, replace_char_at_index, get_altervals, generate_ciph, num_cipher, cipher_string, decipher_string, validate_xor_range
 ---------------------------------------------------------------------------------------------------------------------------------------------------
- cipherstring performs a custom obfuscation using randoms, Xor and an on-the-fly, random numeric cipher.
- this obfuscation results in a 256-length string of hex values (128 chars).
- decipherstring reverses the obfuscation to the original string value.
+ cipher_string performs a custom obfuscation using randoms, Xor and an on-the-fly, random numeric cipher.
+ this obfuscation results in a 256-character hex string (128 encoded chars).
+ decipher_string reverses the obfuscation to the original string value.
 
 """
 import random
 
 
-def getrandval(lower,upper):
+def get_rand_val(lower, upper):
     
     """ Get a random value between lower and upper bound vals """
 
     if lower > upper:
         lower, upper = upper, lower
-    return random.randint(lower,upper)
+    return random.randint(lower, upper)
 
-def getrandchar(lower = 32,upper = 255):
+def get_rand_char(lower = 32, upper = 255):
 
     """ Get a random character from printable range 32 to 255, excluding 127 """
 
@@ -33,29 +33,28 @@ def getrandchar(lower = 32,upper = 255):
     upper = min(upper, 255) # select the smaller of the two
 
     while True:
-            num = random.randint(lower,upper)
+            num = random.randint(lower, upper)
             if num != 127:
                 return chr(num)
 
-def replacecharatindex(origString, idx, newChar):
+def replace_char_at_index(orig_string, idx, new_char):
 
     """ Replace a character in a string at the specified index """
     
-    if idx < 0 or idx >= len(origString):
-        return origString
-    if len(newChar) != 1:
-        return origString
+    if idx < 0 or idx >= len(orig_string):
+        return orig_string
+    if len(new_char) != 1:
+        return orig_string
     
-    return origString[:idx] + newChar + origString[idx + 1:]
+    return orig_string[:idx] + new_char + orig_string[idx + 1:]
 
-def getaltervals(getvals, cipher: bool):
+def get_altervals(getvals, cipher: bool):
 
     """ Alter numeric values - when cipher is true, use one method, when 
      cipher is false, use reverse of cipher method """
 
     if not isinstance(cipher,bool):
         raise TypeError("cipher must be a boolean")
-        return getvals
     
     if len(getvals) == 0:
         return getvals
@@ -76,18 +75,18 @@ def getaltervals(getvals, cipher: bool):
 
     return returnvals
 
-def generateciph():
+def generate_ciph():
     
     """ return 10-char string, no duplicate chars """
 
     ciph = ""
     while len(ciph) < 10:
-        char = getrandchar(52,126)
+        char = get_rand_char(52,126)
         if char not in ciph:
             ciph = ciph + char
     return ciph
 
-def numcipher(chars: str, cipher: bool, ciph: str):
+def num_cipher(chars: str, cipher: bool, ciph: str):
     
     """ return a string that is ciphered or deciphered 
         based on 10-char string in ciph """
@@ -113,7 +112,7 @@ def numcipher(chars: str, cipher: bool, ciph: str):
 
     return result
 
-def cipherstring(mytextstring: str):
+def cipher_string(mytextstring: str):
     
     """ cipher a string
         create a key using
@@ -131,8 +130,8 @@ def cipherstring(mytextstring: str):
         return ""
 
     # random value formatted for six digits and one-digit random val between 2 and 6
-    vals = str(getrandval(0,999999)).zfill(6) 
-    randval = getrandval(2,6)
+    vals = str(get_rand_val(0, 999999)).zfill(6) 
+    randval = get_rand_val(2, 6)
     
     strLen = len(stringtocipher)
     i = strLen
@@ -150,14 +149,14 @@ def cipherstring(mytextstring: str):
             i = strLen - 1
         if v > (len(altervals) - 1): 
             v = 0
-            altervals = getaltervals(altervals, True)
+            altervals = get_altervals(altervals, True)
 
         char = stringtocipher[i]
         getasc = ord(char)
         getval = int(altervals[v])
         addasc = getasc ^ getval # Xor
         addchar = chr(addasc)
-        stringtocipher = replacecharatindex(stringtocipher, i, addchar)
+        stringtocipher = replace_char_at_index(stringtocipher, i, addchar)
 
     # add 1 to v to match 1-based indexing for cross-compatibility with VBA
     v = v + 1
@@ -165,15 +164,15 @@ def cipherstring(mytextstring: str):
     # create a prefix for the cipher, this will be the key to decipher
     prefix = altervals + str(randval) + str(v) + str(strLen).zfill(3)
     
-    ciph = generateciph()    
-    ciphprefix = numcipher(prefix,True,ciph)
+    ciph = generate_ciph()    
+    ciphprefix = num_cipher(prefix, True, ciph)
     
     prefix = ciphprefix + ciph
     
     prefixlen = len(prefix)
 
     if strLen > (maxstrlen - prefixlen):
-        raise ValueError('String too long')
+        raise ValueError('String longer than defined parameters.')
     
     availablelen = maxstrlen - prefixlen
     spacing = 0
@@ -197,7 +196,7 @@ def cipherstring(mytextstring: str):
                 paddedString = paddedString + stringtocipher[i]
                 i += 1
             else:
-                paddedString += getrandchar()
+                paddedString += get_rand_char()
     
     # Attach the prefix / key to the padded string cipher
     paddedString = prefix + paddedString
@@ -206,9 +205,9 @@ def cipherstring(mytextstring: str):
     # String is ciphered
     return hexString
 
-def decipherstring(myCipherstring):
+def decipher_string(myCipherstring):
     
-    """ decipher a string created by cipherstring
+    """ decipher a string created by cipher_string
         retrieve the prefix / key consisting
         - a random six-digit number,
         - a random one-digit number,
@@ -237,7 +236,7 @@ def decipherstring(myCipherstring):
     key = len(prefix) - 10
     prefix = prefix[:key]
     
-    prefix = numcipher(prefix, False, numciph)
+    prefix = num_cipher(prefix, False, numciph)
     
     chars = prefix[-3:]
     if not all(c in "0123456789" for c in chars):
@@ -303,7 +302,7 @@ def decipherstring(myCipherstring):
     altervals = altervals[:altervalsLen]
     idx = strLen - 1
 
-    # Reverse traversal through string and reverse altervals using getaltervals
+    # Reverse traversal through string and reverse altervals using get_altervals
     for loopcount in range(loops):
         if i > idx: # reset index
             i = 0
@@ -312,7 +311,7 @@ def decipherstring(myCipherstring):
             if len(altervals) < 6:
                 altervals = altervalsOrig
 
-            altervals = getaltervals(altervals, False)
+            altervals = get_altervals(altervals, False)
             v = (len(altervals) - 1)
         
         char = stringtoDecipher[i]
@@ -320,7 +319,7 @@ def decipherstring(myCipherstring):
         getval = int(altervals[v])
         addasc = getasc ^ getval
         addchar = chr(addasc)
-        stringtoDecipher = replacecharatindex(stringtoDecipher,i, addchar)
+        stringtoDecipher = replace_char_at_index(stringtoDecipher,i, addchar)
 
         i += 1
         v -= 1
@@ -330,15 +329,15 @@ def decipherstring(myCipherstring):
 
 def validate_xor_range():
     """
-    Confirms that applying XOR between any printabl ASCII char (32-255)
+    Confirms that applying XOR between any printable ASCII char (32-255)
     and numeric keys 0-9 never produces a value outside the printable range.
 
     This guarantees that XOR-based cipher output always remains printable
 
     """
     c = 0
-    for i in range(32,256):
-        for k in range(0,9):
+    for i in range(32, 256):
+        for k in range(0, 10):
             x = i ^ k
             if x < 32 or x > 255:
                 c = c + 1
