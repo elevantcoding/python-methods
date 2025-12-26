@@ -1,0 +1,345 @@
+""" 
+Cipher Engine 
+by ElevantCoding
+
+ Procedures in this module:
+---------------------------------------------------------------------------------------------------------------------------------------------------
+ getrandval, getrandchar, replacecharatindex, getaltervals, generateciph, numcipher, cipherstring, decipherstring, validate_xor_range
+---------------------------------------------------------------------------------------------------------------------------------------------------
+ cipherstring performs a custom obfuscation using randoms, Xor and an on-the-fly, random numeric cipher.
+ this obfuscation results in a 256-length string of hex values (128 chars).
+ decipherstring reverses the obfuscation to the original string value.
+
+"""
+import random
+
+
+def getrandval(lower,upper):
+    
+    """ Get a random value between lower and upper bound vals """
+
+    if lower > upper:
+        lower, upper = upper, lower
+    return random.randint(lower,upper)
+
+def getrandchar(lower = 32,upper = 255):
+
+    """ Get a random character from printable range 32 to 255, excluding 127 """
+
+    if lower > upper:
+        lower, upper = upper, lower
+
+    lower = max(lower, 32) # select the larger of the two
+    upper = min(upper, 255) # select the smaller of the two
+
+    while True:
+            num = random.randint(lower,upper)
+            if num != 127:
+                return chr(num)
+
+def replacecharatindex(origString, idx, newChar):
+
+    """ Replace a character in a string at the specified index """
+    
+    if idx < 0 or idx >= len(origString):
+        return origString
+    if len(newChar) != 1:
+        return origString
+    
+    return origString[:idx] + newChar + origString[idx + 1:]
+
+def getaltervals(getvals, cipher: bool):
+
+    """ Alter numeric values - when cipher is true, use one method, when 
+     cipher is false, use reverse of cipher method """
+
+    if not isinstance(cipher,bool):
+        raise TypeError("cipher must be a boolean")
+        return getvals
+    
+    if len(getvals) == 0:
+        return getvals
+    
+    if not all(c in "0123456789" for c in getvals):
+        return getvals
+    
+    returnvals = ""
+    for v in range(len(getvals)): 
+        num = int(getvals[v])
+        if ((v + 1) % 2 !=0) == cipher:  
+            stepVal = 1
+        else:
+            stepVal = - 1
+
+        num = (num + stepVal + 10) % 10
+        returnvals += str(num)
+
+    return returnvals
+
+def generateciph():
+    
+    """ return 10-char string, no duplicate chars """
+
+    ciph = ""
+    while len(ciph) < 10:
+        char = getrandchar(52,126)
+        if char not in ciph:
+            ciph = ciph + char
+    return ciph
+
+def numcipher(chars: str, cipher: bool, ciph: str):
+    
+    """ return a string that is ciphered or deciphered 
+        based on 10-char string in ciph """
+
+    if len(chars) == 0:
+        return chars
+    if len(ciph) != 10:
+        return chars
+    if cipher == True and not all(c in "0123456789" for c in chars):
+        return chars
+         
+    KEY = "0123456789"
+
+    result = ""
+    for i in range(len(chars)):
+        char = chars[i]
+        if cipher == True:
+            pos = KEY.index(char)
+            result = result + ciph[pos]
+        else:
+            pos = ciph.index(char)
+            result = result + KEY[pos]
+
+    return result
+
+def cipherstring(mytextstring: str):
+    
+    """ cipher a string
+        create a key using
+        - a random six-digit number,
+        - a random one-digit number,
+        - last index position of values used for xor
+        - original string length
+        - num cipher
+    """
+    maxstrlen = 128
+
+    stringtocipher = mytextstring.strip()
+
+    if len(stringtocipher) == 0:
+        return ""
+
+    # random value formatted for six digits and one-digit random val between 2 and 6
+    vals = str(getrandval(0,999999)).zfill(6) 
+    randval = getrandval(2,6)
+    
+    strLen = len(stringtocipher)
+    i = strLen
+    loops = strLen * randval
+    v = -1
+    altervals = vals
+
+    # using the random-generated numerals, alter the ascii values of each char 
+    # working through the string from right to left randval times
+    for loopcount in range(loops):
+        i = i - 1
+        v = v + 1
+
+        if i < 0:
+            i = strLen - 1
+        if v > (len(altervals) - 1): 
+            v = 0
+            altervals = getaltervals(altervals, True)
+
+        char = stringtocipher[i]
+        getasc = ord(char)
+        getval = int(altervals[v])
+        addasc = getasc ^ getval # Xor
+        addchar = chr(addasc)
+        stringtocipher = replacecharatindex(stringtocipher, i, addchar)
+
+    
+    # create a prefix for the cipher, this will be the key to decipher
+    prefix = altervals + str(randval) + str(v) + str(strLen).zfill(3)
+    prefix = str(prefix)
+    
+    ciph = generateciph()    
+    ciphprefix = numcipher(prefix,True,ciph)
+    
+    prefix = ciphprefix + ciph
+    
+    prefixlen = len(prefix)
+
+    if strLen > (maxstrlen - prefixlen):
+        raise ValueError('String too long')
+    
+    availablelen = maxstrlen - prefixlen
+    spacing = 0
+    if strLen < availablelen:
+        spacing = int(availablelen / strLen)
+    
+    # pad random chars between the ciphered chars if space allows
+    if spacing == 0:
+        paddedString = stringtocipher
+    else:
+        paddedString = ""
+        s = spacing
+        i = 0
+        for p in range(availablelen):
+            if s == spacing:
+                s = 1
+            else:
+                s += 1
+            
+            if s == 1 and i < strLen:
+                paddedString = paddedString + stringtocipher[i]
+                i += 1
+            else:
+                paddedString += getrandchar()
+    
+    # Attach the prefix / key to the padded string cipher
+    paddedString = prefix + paddedString
+    hexString = paddedString.encode('latin-1').hex().upper()
+    
+    # String is ciphered
+    return hexString
+
+def decipherstring(myCipherstring):
+    
+    """ decipher a string created by cipherstring
+        retrieve the prefix / key consisting
+        - a random six-digit number,
+        - a random one-digit number,
+        - last index position of values used for xor
+        - original string length
+        - num cipher
+        (vertical bars used for illustration only and are not in the prefix)
+        -----------------------------------------------------------
+        000000|0|0|000|aaaaaaaaaa
+        -----------------------------------------------------------
+     """
+    
+    prefixlen = 21
+    maxstrlen = 128
+
+    myCipherstring = myCipherstring.strip()
+    
+    if len(myCipherstring) == 0:
+        return ""
+    
+    stringtoDecipher = bytes.fromhex(myCipherstring).decode('latin-1')
+    
+    prefix = stringtoDecipher[:prefixlen]
+    
+    numciph = prefix[-10:]
+    key = len(prefix) - 10
+    prefix = prefix[:key]
+    
+    prefix = numcipher(prefix, False, numciph)
+    
+    chars = prefix[-3:]
+    if not all(c in "0123456789" for c in chars):
+        return ""
+    if int(chars) == 0:
+        return ""
+    strLen = int(chars)    
+    
+    prefix = prefix[:len(prefix)-3]
+    
+    char = prefix[-1:]
+    if not char.isdigit():
+        return ""
+    v = int(char)
+
+    prefix = prefix[:len(prefix) - 1]
+
+    char = prefix[-1:]
+    if not char.isdigit():
+        return ""
+    randval = int(char)
+
+    prefix = prefix[:len(prefix)-1]
+
+    chars = prefix
+    if len(chars) != 6:
+        return ""
+    if not all(c in "0123456789" for c in chars):
+        return ""
+    if int(chars) == 0:
+        return ""
+    
+    altervals = str(chars)
+    
+    paddedString = stringtoDecipher[prefixlen:]
+    
+    availablelen = maxstrlen - prefixlen
+    spacing = int((availablelen) / strLen)
+    if spacing < 1:
+        spacing = 1
+    
+    # Remove padding
+    stringtoDecipher = ""
+    i = 0
+    s = 1
+    for p in range(availablelen):
+        if s == 1:
+            stringtoDecipher += paddedString[p]
+            i += 1
+            if i == strLen:
+                break
+        s += 1
+        if s > spacing:
+            s = 1
+
+    i = 0 
+    loops = strLen * randval
+    altervalsOrig = altervals
+    altervalsLen = v + 1    
+    altervals = altervals[:altervalsLen]
+    idx = strLen - 1
+
+    # Reverse traversal through string and reverse altervals using getaltervals
+    for loopcount in range(loops):
+        if i > idx: # reset index
+            i = 0
+        
+        if v < 0:
+            if len(altervals) < 6:
+                altervals = altervalsOrig
+
+            altervals = getaltervals(altervals, False)
+            v = (len(altervals) - 1)
+        
+        char = stringtoDecipher[i]
+        getasc = ord(char)
+        getval = int(altervals[v])
+        addasc = getasc ^ getval
+        addchar = chr(addasc)
+        stringtoDecipher = replacecharatindex(stringtoDecipher,i, addchar)
+
+        i += 1
+        v -= 1
+    
+    # String is deciphered
+    return stringtoDecipher
+
+def validate_xor_range():
+    """
+    Confirms that applying XOR between any printabl ASCII char (32-255)
+    and numeric keys 0-9 never produces a value outside the printable range.
+
+    This guarantees that XOR-based cipher output always remains printable
+
+    """
+    c = 0
+    for i in range(32,256):
+        for k in range(0,9):
+            x = i ^ k
+            if x < 32 or x > 255:
+                c = c + 1
+                print(i, " Xor ", k, " is ", x)
+    return c
+
+            
+
