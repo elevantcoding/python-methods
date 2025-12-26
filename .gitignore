@@ -1,4 +1,14 @@
+# Python junk
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
+
+# Local experiments / scratch files
+main.py
+hello.py
+excel.py
+importexcel.py
+sample.py
+
+# Images / misc
+*.jpg
+*.png
