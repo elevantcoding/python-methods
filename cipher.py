@@ -159,10 +159,11 @@ def cipherstring(mytextstring: str):
         addchar = chr(addasc)
         stringtocipher = replacecharatindex(stringtocipher, i, addchar)
 
-    
+    # add 1 to v to match 1-based indexing for cross-compatibility with VBA
+    v = v + 1
+
     # create a prefix for the cipher, this will be the key to decipher
     prefix = altervals + str(randval) + str(v) + str(strLen).zfill(3)
-    prefix = str(prefix)
     
     ciph = generateciph()    
     ciphprefix = numcipher(prefix,True,ciph)
@@ -251,6 +252,9 @@ def decipherstring(myCipherstring):
     if not char.isdigit():
         return ""
     v = int(char)
+    
+    # subtract 1 from v
+    v = v - 1
 
     prefix = prefix[:len(prefix) - 1]
 
