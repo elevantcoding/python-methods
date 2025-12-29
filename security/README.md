@@ -7,7 +7,7 @@ Cross-language cipher compatibility with corresponding VBA and SQL Server implem
 
 "elevantcoding/vba-methods/security/StringCipher.bas"  
 "elevantcoding/sql-methods/security/    
-      elevant.CipherString.sql"  
-      elevant.DecipherString.sql"  
-      elevant.GetAlterVals.sql"  
-      elevant.GetCipherString.sql"  
+      - elevant.CipherString.sql"  
+      - elevant.DecipherString.sql"  
+      - elevant.GetAlterVals.sql"  
+      - elevant.GetCipherString.sql"  
