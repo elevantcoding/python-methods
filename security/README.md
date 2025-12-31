@@ -1,5 +1,5 @@
 # Security Module
-This folder contains cryptographic and string-obfuscation routines.
+This folder contains a string-obfuscation routine.
 
 cipher.py contains nine functions involved in the cipher / decipher functionality.
 
