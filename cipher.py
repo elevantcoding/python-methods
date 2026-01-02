@@ -233,23 +233,19 @@ def decipher_string(myCipherstring):
     prefix = stringtoDecipher[:prefixlen]
     
     numciph = prefix[-10:]
-    key = len(prefix) - 10
-    prefix = prefix[:key]
+    prefix = prefix[:-10]
     
     prefix = num_cipher(prefix, False, numciph)
+
+    if len(prefix) != 11 or not all(c in "0123456789" for c in prefix):
+        return ""
     
     chars = prefix[-3:]
-    if not all(c in "0123456789" for c in chars):
-        return ""
-    if int(chars) == 0:
-        return ""
     strLen = int(chars)    
     
     prefix = prefix[:len(prefix)-3]
     
     char = prefix[-1:]
-    if not char.isdigit():
-        return ""
     v = int(char)
     
     # subtract 1 from v
@@ -258,20 +254,11 @@ def decipher_string(myCipherstring):
     prefix = prefix[:len(prefix) - 1]
 
     char = prefix[-1:]
-    if not char.isdigit():
-        return ""
     randval = int(char)
 
     prefix = prefix[:len(prefix)-1]
 
     chars = prefix
-    if len(chars) != 6:
-        return ""
-    if not all(c in "0123456789" for c in chars):
-        return ""
-    if int(chars) == 0:
-        return ""
-    
     altervals = str(chars)
     
     paddedString = stringtoDecipher[prefixlen:]
@@ -281,7 +268,7 @@ def decipher_string(myCipherstring):
     if spacing < 1:
         spacing = 1
     
-    # Remove padding
+    # remove padding
     stringtoDecipher = ""
     i = 0
     s = 1
@@ -302,7 +289,7 @@ def decipher_string(myCipherstring):
     altervals = altervals[:altervalsLen]
     idx = strLen - 1
 
-    # Reverse traversal through string and reverse altervals using get_altervals
+    # reverse traversal through string and reverse altervals using get_altervals
     for loopcount in range(loops):
         if i > idx: # reset index
             i = 0
@@ -324,7 +311,7 @@ def decipher_string(myCipherstring):
         i += 1
         v -= 1
     
-    # String is deciphered
+    # string is deciphered
     return stringtoDecipher
 
 def validate_xor_range():
