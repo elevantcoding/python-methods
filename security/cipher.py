@@ -91,15 +91,16 @@ def num_cipher(chars: str, cipher: bool, ciph: str):
     """ return a string that is ciphered or deciphered 
         based on 10-char string in ciph """
 
-    if len(chars) == 0:
-        return chars
-    if len(ciph) != 10:
-        return chars
-    if cipher == True and not all(c in "0123456789" for c in chars):
-        return chars
-         
     KEY = "0123456789"
 
+    if len(chars) == 0:
+        return chars
+    if len(ciph) != len(KEY):
+        return chars
+    if cipher == True and not all(c in KEY for c in chars):
+        return chars
+         
+    
     result = ""
     for i in range(len(chars)):
         char = chars[i]
