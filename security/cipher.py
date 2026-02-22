@@ -9,7 +9,10 @@ by ElevantCoding
  cipher_string performs a custom obfuscation using randoms, Xor and an on-the-fly, random numeric cipher.
  this obfuscation results in a 256-character hex string (128 encoded chars).
  decipher_string reverses the obfuscation to the original string value.
-
+-----------------------------------------
+get_asc_vals, stirred_chars, hash_string
+-----------------------------------------
+hash_string is a one-way hash that consistently produces the same result
 """
 import random
 
@@ -332,5 +335,66 @@ def validate_xor_range():
                 print(i, " Xor ", k, " is ", x)
     return c
 
-            
+def sum_asc_vals(vals: str):
+    vals = vals.strip()
+    lenvals = len(vals)
+    if lenvals == 0:
+            return 0
 
+    sumvals = 0
+    for i in range(lenvals):
+        char = vals[i]
+        ascval = ord(char)
+        sumvals = sumvals + ascval
+    return sumvals
+
+def stirred_chars(getstr: str):
+    
+    if not isinstance(getstr,str):
+        raise TypeError("getstr must be a string")
+    
+    getstr = getstr.strip()
+    strlen = len(getstr)
+    
+    if strlen==0:
+        return ""    
+    
+    sumasc = sum_asc_vals(getstr)
+    chars = list(getstr)
+
+    for n in range(strlen):
+        for a in range(n, strlen):
+            ascval = ord(chars[a])
+            newval = ((ascval ^ sumasc) % 95) + 32
+            chars[a] = chr(newval)
+
+        sumasc = sumasc ^ ord(chars[n])
+
+    return "".join(chars)
+
+def hash_string(stringtohash: str):
+
+    if not isinstance(stringtohash,str):
+        raise TypeError("stringtohash must be a string")
+    
+    stringtohash = stringtohash.strip()
+    strlen = len(stringtohash)
+    
+    if strlen == 0:
+        return ""
+    
+    maxstrlen = 126
+    alterstr = stringtohash
+    buildstr = ""
+    a = len(buildstr)
+    build = False
+    
+    while not build:
+        alterstr = stirred_chars(alterstr)
+        buildstr = buildstr + alterstr
+        a = len(buildstr)
+        build = a > maxstrlen            
+    buildstr = buildstr[:maxstrlen]
+    hexString = buildstr.encode('latin-1').hex().upper()
+    return hexString
+    
