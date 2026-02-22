@@ -1,7 +1,7 @@
 # Security Module
 This folder contains a string-obfuscation routine.
 
-cipher.py contains nine functions involved in the cipher / decipher functionality.
+cipher.py contains nine functions involved in the cipher / decipher functionality and three functions involved in hash_string
 
 Cross-language cipher compatibility with corresponding VBA and SQL Server implementations, enabling use across the application stack:
 
